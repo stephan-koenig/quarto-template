@@ -1,0 +1,29 @@
+name: Cache build for BinderHub
+on: push
+
+jobs:
+  binder:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Load secret
+      id:   op-load-secret
+      uses: 1password/load-secrets-action@v1
+      with:
+        export-env: false
+      env:
+        OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        DOCKER_USERNAME: op://github-actions/cache-build-for-binderhub/username
+        DOCKER_PASSWORD: op://github-actions/cache-build-for-binderhub/credential
+
+    - name: Update Jupyter dependencies with repo2docker
+      uses: jupyterhub/repo2docker-action@master
+      with:
+        DOCKER_USERNAME: ${{ steps.op-load-secret.outputs.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ steps.op-load-secret.outputs.DOCKER_PASSWORD }}
+        BINDER_CACHE: true
+        PUBLIC_REGISTRY_CHECK: true
